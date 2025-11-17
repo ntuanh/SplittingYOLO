@@ -33,7 +33,7 @@ def measure_load_ram(model_path="yolo11n.pt", device="cuda"):
 def head():
     #
     ram_before = check_ram()
-    cfg = yaml.safe_load(open('tail.yaml', 'r', encoding='utf-8'))
+    cfg = yaml.safe_load(open('cfg/tail.yaml', 'r', encoding='utf-8'))
     model = DetectionModel(cfg, verbose = False)
     print("   Loading state_dict for model...")
     state_dict_part1 = torch.load('part2.pt', map_location='cpu', weights_only=True)

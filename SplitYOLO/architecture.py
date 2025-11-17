@@ -1,24 +1,16 @@
-# architecture.py (Phiên bản cuối cùng)
-
 import torch
 from ultralytics import YOLO
 from collections import OrderedDict
 
-# ================================
-# ⚙️ 1. Load model YOLO11 gốc
-# ================================
+# load origin model
 print("🚀 Loading original YOLOv11n model...")
 model = YOLO("yolo11n.pt").model
 
-# ================================
-# ✂️ 2. Chọn điểm split
-# ================================
+# get split layer
 split_index = 4
 print(f"\n🔧 Splitting model at layer index = {split_index}")
 
-# ================================
-# 🧩 3. Tách state_dict mà KHÔNG THAY ĐỔI KEY
-# ================================
+# separate weight dict
 full_state_dict = model.state_dict()
 part1_state_dict = OrderedDict()
 part2_state_dict = OrderedDict()
@@ -38,7 +30,7 @@ print(f"Full state dict type :{type(full_state_dict)}")
 print("   Processing state_dict keys...")
 for key, value in full_state_dict.items():
     if not key.startswith('model.'):
-        continue  # Bỏ qua các key không thuộc model
+        continue
 
     try:
         layer_index = int(key.split('.')[1])
@@ -49,16 +41,13 @@ for key, value in full_state_dict.items():
             part2_state_dict[key] = value
 
     except (ValueError, IndexError):
-        # Key của Detect head có thể không theo quy tắc
-        # Giả sử chúng luôn thuộc phần cuối
+        # Load key of detect ( purpose that it in the end of progress )
         part2_state_dict[key] = value
 
 print(f"   Part 1 has {len(part1_state_dict)} keys.")
 print(f"   Part 2 has {len(part2_state_dict)} keys.")
 
-# ================================
-# 💾 4. Lưu 2 state_dict thành file riêng
-# ================================
+# save 2 dicts
 torch.save(part1_state_dict, "part1.pt")
 torch.save(part2_state_dict, "part2.pt")
 
