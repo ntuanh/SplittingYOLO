@@ -1,9 +1,14 @@
 import psutil
+import torch
 
-def check_ram():
-    ram = psutil.virtual_memory()
-    # print(f"Total RAM: {ram.total / (1024 ** 3):.2f} GB")
-    print(f"Used RAM: {ram.used / (1024 ** 3):.2f} GB")
-    # print(f"Available RAM: {ram.available / (1024 ** 3):.2f} GB")
-    # print(f"RAM Usage: {ram.percent}%")
-    return ram.used
+def get_ram():
+    process = psutil.Process()
+    return process.memory_info().rss / (1024 ** 2)  # MB
+
+def get_vram():
+    vram_peak = torch.cuda.max_memory_reserved() / 1024 ** 2
+    return vram_peak
+
+def reset_vram():
+    torch.cuda.reset_peak_memory_stats()
+    return 0

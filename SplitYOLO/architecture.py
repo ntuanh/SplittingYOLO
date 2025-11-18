@@ -3,12 +3,12 @@ from ultralytics import YOLO
 from collections import OrderedDict
 
 # load origin model
-print("🚀 Loading original YOLOv11n model...")
+print("Loading original YOLOv11n model...")
 model = YOLO("yolo11n.pt").model
 
 # get split layer
 split_index = 4
-print(f"\n🔧 Splitting model at layer index = {split_index}")
+print(f"\nSplitting model at layer index = {split_index}")
 
 # separate weight dict
 full_state_dict = model.state_dict()
@@ -51,6 +51,6 @@ print(f"   Part 2 has {len(part2_state_dict)} keys.")
 torch.save(part1_state_dict, "part1.pt")
 torch.save(part2_state_dict, "part2.pt")
 
-print("\n✅ State dictionaries saved with original keys:")
+print("\nState dictionaries saved with original keys:")
 print(f" - part1.pt (layers 0 → {split_index - 1})")
 print(f" - part2.pt (layers {split_index} → end)")
