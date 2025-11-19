@@ -12,6 +12,7 @@ print(f"\nSplitting model at layer index = {split_index}")
 
 # separate weight dict
 full_state_dict = model.state_dict()
+# print(full_state_dict.keys())
 part1_state_dict = OrderedDict()
 part2_state_dict = OrderedDict()
 

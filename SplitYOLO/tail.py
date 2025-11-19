@@ -96,7 +96,8 @@ vram_before = reset_vram()
 t0 = time.time()
 
 with torch.no_grad():
-    preds = forward_tail(tail_model, feature_map)
+    for _ in range(1000):
+        preds = forward_tail(tail_model, feature_map)
 
 t1 = time.time()
 ram_after = get_ram()

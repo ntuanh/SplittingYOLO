@@ -16,6 +16,7 @@ start_vram = reset_vram()
 t0 = time.time()
 
 cfg = yaml.safe_load(open('cfg/head.yaml', 'r', encoding='utf-8'))
+# yolo11.yaml
 model = DetectionModel(cfg, verbose=False).to(device)
 
 t1 = time.time()
@@ -74,13 +75,14 @@ def forward_head(head_model, x_in):
 # ==========================
 # 5. Forward pass + measure RAM and VRAM
 # ==========================
-print("Performing custom forward pass on head...")
+# print("Performing custom forward pass on head...")
 ram_before = get_ram()
 vram_before = reset_vram()
 t0 = time.time()
 
 with torch.no_grad():
-    feature_map = forward_head(model, x)
+    for _ in range(1000):
+        feature_map = forward_head(model, x)
 
 t1 = time.time()
 ram_after = get_ram()
