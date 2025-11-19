@@ -12,32 +12,32 @@ backbone:
   - [-1, 1, Conv, [128, 3, 2]]
   - [-1, 2, C3k2, [256, False, 0.25]]
   - [-1, 1, Conv, [256, 3, 2]]
-
-  # Lớp giả
-  - [-1, 1, nn.Identity, []]   # 4
-  - [-1, 1, nn.Identity, []]   # 5
-  - [-1, 1, nn.Identity, []]   # 6
-  - [-1, 1, nn.Identity, []]   # 7
-  - [-1, 1, nn.Identity, []]   # 8
-  - [-1, 1, nn.Identity, []]   # 9
-  - [-1, 1, nn.Identity, []]   # 10
-
-# YOLO11n head
+#
+#  # Lớp giả
+#  - [-1, 1, nn.Identity, []]   # 4
+#  - [-1, 1, nn.Identity, []]   # 5
+#  - [-1, 1, nn.Identity, []]   # 6
+#  - [-1, 1, nn.Identity, []]   # 7
+#  - [-1, 1, nn.Identity, []]   # 8
+#  - [-1, 1, nn.Identity, []]   # 9
+#  - [-1, 1, nn.Identity, []]   # 10
+#
+## YOLO11n head
 head:
-  - [-1, 1, nn.Identity, []]   # 11
-  - [-1, 1, nn.Identity, []]   # 12 (thay cho Concat)
-  - [-1, 1, nn.Identity, []]   # 13
-  - [-1, 1, nn.Identity, []]   # 14
-  - [-1, 1, nn.Identity, []]   # 15 (thay cho Concat)
-  - [-1, 1, nn.Identity, []]   # 16
-  - [-1, 1, nn.Identity, []]   # 17
-  - [-1, 1, nn.Identity, []]   # 18 (thay cho Concat)
-  - [-1, 1, nn.Identity, []]   # 19
-  - [-1, 1, nn.Identity, []]   # 20
-  - [-1, 1, nn.Identity, []]   # 21 (thay cho Concat)
-  - [-1, 1, nn.Identity, []]   # 22
-
-  # Giữ lại lớp Detect và trỏ nó vào các lớp Identity
-  # Điều này có thể gây lỗi vì Detect mong đợi các kênh cụ thể.
-  # Cách tốt nhất là trỏ Detect vào lớp cuối cùng có thật.
+#  - [-1, 1, nn.Identity, []]   # 11
+#  - [-1, 1, nn.Identity, []]   # 12 (thay cho Concat)
+#  - [-1, 1, nn.Identity, []]   # 13
+#  - [-1, 1, nn.Identity, []]   # 14
+#  - [-1, 1, nn.Identity, []]   # 15 (thay cho Concat)
+#  - [-1, 1, nn.Identity, []]   # 16
+#  - [-1, 1, nn.Identity, []]   # 17
+#  - [-1, 1, nn.Identity, []]   # 18 (thay cho Concat)
+#  - [-1, 1, nn.Identity, []]   # 19
+#  - [-1, 1, nn.Identity, []]   # 20
+#  - [-1, 1, nn.Identity, []]   # 21 (thay cho Concat)
+#  - [-1, 1, nn.Identity, []]   # 22
+#
+#  # Giữ lại lớp Detect và trỏ nó vào các lớp Identity
+#  # Điều này có thể gây lỗi vì Detect mong đợi các kênh cụ thể.
+#  # Cách tốt nhất là trỏ Detect vào lớp cuối cùng có thật.
   - [[3], 1, Detect, [nc]] # Trỏ Detect vào lớp 3 để tránh lỗi
