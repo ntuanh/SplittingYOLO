@@ -108,54 +108,54 @@ print(f"[Tail Forward] VRAM used: {vram_after - vram_before:.4f} MB")
 # ============================================================
 # 5. POSTPROCESS
 # ============================================================
-ram_before = get_ram()
-vram_before = reset_vram()
-t0 = time.time()
-
-args = DEFAULT_CFG
-args.imgsz = 640
-custom_predictor = DetectionPredictor(overrides=vars(args))
-custom_predictor.model = tail_model
-
-# load origin img and parameters
-original_img_path = 'data/image.png'
-img_to_draw = cv2.imread(original_img_path)
-if img_to_draw is None:
-    print(f"[Error]: Could not read the original image at '{original_img_path}'")
-    exit()
-
-orig_imgs = [img_to_draw]
-dummy_im = torch.zeros(1, 3, 640, 640)
-custom_predictor.batch = [original_img_path], orig_imgs, dummy_im, None
-
-results = custom_predictor.postprocess(preds, dummy_im, orig_imgs)
-result = results[0]
-
-t1 = time.time()
-ram_after = get_ram()
-vram_after = get_vram()
-print(f"[Postprocess] Time: {t1 - t0:.4f} s")
-print(f"[Postprocess] RAM used: {ram_after - ram_before:.4f} MB")
-print(f"[Postprocess] VRAM used: {vram_after - vram_before:.4f} MB")
+# ram_before = get_ram()
+# vram_before = reset_vram()
+# t0 = time.time()
+#
+# args = DEFAULT_CFG
+# args.imgsz = 640
+# custom_predictor = DetectionPredictor(overrides=vars(args))
+# custom_predictor.model = tail_model
+#
+# # load origin img and parameters
+# original_img_path = 'data/image.png'
+# img_to_draw = cv2.imread(original_img_path)
+# if img_to_draw is None:
+#     print(f"[Error]: Could not read the original image at '{original_img_path}'")
+#     exit()
+#
+# orig_imgs = [img_to_draw]
+# dummy_im = torch.zeros(1, 3, 640, 640)
+# custom_predictor.batch = [original_img_path], orig_imgs, dummy_im, None
+#
+# results = custom_predictor.postprocess(preds, dummy_im, orig_imgs)
+# result = results[0]
+#
+# t1 = time.time()
+# ram_after = get_ram()
+# vram_after = get_vram()
+# print(f"[Postprocess] Time: {t1 - t0:.4f} s")
+# print(f"[Postprocess] RAM used: {ram_after - ram_before:.4f} MB")
+# print(f"[Postprocess] VRAM used: {vram_after - vram_before:.4f} MB")
 
 # ============================================================
 # 6. DRAW OUTPUT
 # ============================================================
-boxes = result.boxes
-if len(boxes) > 0:
-    annotator = Annotator(orig_imgs[0], line_width=2, example=str(result.names))
-    for box in boxes:
-        class_id = int(box.cls)
-        coords = box.xyxy[0].tolist()
-        conf = float(box.conf)
-        class_name = result.names[class_id]
-        label = f'{class_name} {conf:.2f}'
-        print(f"   - Object: {class_name}, Confidence: {conf:.2f}")
-        annotator.box_label(coords, label, color=colors(class_id + 1, True))
-    output_image = annotator.result()
-else:
-    output_image = orig_imgs[0]
+# boxes = result.boxes
+# if len(boxes) > 0:
+#     annotator = Annotator(orig_imgs[0], line_width=2, example=str(result.names))
+#     for box in boxes:
+#         class_id = int(box.cls)
+#         coords = box.xyxy[0].tolist()
+#         conf = float(box.conf)
+#         class_name = result.names[class_id]
+#         label = f'{class_name} {conf:.2f}'
+#         print(f"   - Object: {class_name}, Confidence: {conf:.2f}")
+#         annotator.box_label(coords, label, color=colors(class_id + 1, True))
+#     output_image = annotator.result()
+# else:
+#     output_image = orig_imgs[0]
 
-cv2.imshow("Detection Result", output_image)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+# cv2.imshow("Detection Result", output_image)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
