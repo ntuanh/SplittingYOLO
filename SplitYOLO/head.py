@@ -11,38 +11,38 @@ from src.Utils import get_ram, get_vram, reset_vram
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"[DEVICE] {device}")
 
-start_ram = get_ram()
-start_vram = reset_vram()
-t0 = time.time()
+# start_ram = get_ram()
+# start_vram = reset_vram()
+# t0 = time.time()
 
 cfg = yaml.safe_load(open('cfg/head.yaml', 'r', encoding='utf-8'))
 # yolo11.yaml
 model = DetectionModel(cfg, verbose=False).to(device)
 
-t1 = time.time()
-ram_after_arch = get_ram()
-vram_after_arch = get_vram()
-print(f"[Architecture] Time: {t1 - t0:.4f} s")
-print(f"[Architecture] RAM used: {ram_after_arch - start_ram:.2f} MB")
-print(f"[Architecture] VRAM used: {vram_after_arch - start_vram:.2f} MB")
+# t1 = time.time()
+# ram_after_arch = get_ram()
+# vram_after_arch = get_vram()
+# print(f"[Architecture] Time: {t1 - t0:.4f} s")
+# print(f"[Architecture] RAM used: {ram_after_arch - start_ram:.2f} MB")
+# print(f"[Architecture] VRAM used: {vram_after_arch - start_vram:.2f} MB")
 
 # ==========================
 # 2. Load weights (part1)
 # ==========================
-ram_before = get_ram()
-vram_before = reset_vram()
-t0 = time.time()
+# ram_before = get_ram()
+# vram_before = reset_vram()
+# t0 = time.time()
 
 state_dict_part1 = torch.load('part1.pt', map_location=device, weights_only=True)
 model.load_state_dict(state_dict_part1, strict=False)
 model.eval()
 
-t1 = time.time()
-ram_after = get_ram()
-vram_after = get_vram()
-print(f"[Weights] Time: {t1 - t0:.4f} s")
-print(f"[Weights] RAM used: {ram_after - ram_before:.2f} MB")
-print(f"[Weights] VRAM used: {vram_after - vram_before:.2f} MB")
+# t1 = time.time()
+# ram_after = get_ram()
+# vram_after = get_vram()
+# print(f"[Weights] Time: {t1 - t0:.4f} s")
+# print(f"[Weights] RAM used: {ram_after - ram_before:.2f} MB")
+# print(f"[Weights] VRAM used: {vram_after - vram_before:.2f} MB")
 
 # ==========================
 # 3. Load and preprocess image
@@ -77,21 +77,21 @@ def forward_head(head_model, x_in):
 # 5. Forward pass + measure RAM and VRAM
 # ==========================
 # print("Performing custom forward pass on head...")
-ram_before = get_ram()
-vram_before = reset_vram()
-t0 = time.time()
+# ram_before = get_ram()
+# vram_before = reset_vram()
+# t0 = time.time()
 
-with torch.no_grad():
+with torch.inference_mode():
     for _ in range(1000):
         feature_map = forward_head(model, x)
 
-t1 = time.time()
-ram_after = get_ram()
-vram_after = get_vram()
-
-print(f"[Inference] Time: {t1 - t0:.4f} s")
-print(f"[Inference] RAM used: {ram_after - ram_before:.2f} MB")
-print(f"[Inference] VRAM used: {vram_after - vram_before:.2f} MB")
+# t1 = time.time()
+# ram_after = get_ram()
+# vram_after = get_vram()
+#
+# print(f"[Inference] Time: {t1 - t0:.4f} s")
+# print(f"[Inference] RAM used: {ram_after - ram_before:.2f} MB")
+# print(f"[Inference] VRAM used: {vram_after - vram_before:.2f} MB")
 
 # ==========================
 # 6. Save feature map
