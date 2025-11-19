@@ -89,7 +89,8 @@ vram_before = reset_vram()
 t0 = time.time()
 
 with torch.inference_mode():
-    preds = forward(model,x)
+    for _ in range(1000):
+        preds = forward(model,x)
 
 t1 = time.time()
 ram_after = get_ram()
