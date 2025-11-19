@@ -160,7 +160,7 @@
 from ultralytics import YOLO
 
 # Load model
-model = YOLO("yolo11n.pt")   # or yolov8n.pt
+model = YOLO("yolov8n.pt")   # or yolov8n.pt
 
 for _ in range(1000):
     results = model("./data/image.png" , verbose=False)[0]
