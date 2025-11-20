@@ -163,7 +163,7 @@ from ultralytics import YOLO
 model = YOLO("yolov8n.pt")   # or yolov8n.pt
 
 for _ in range(1000):
-    results = model("./data/image.png" , verbose=False)[0]
+    results = model("./data/image640.png" , verbose=False)[0]
 
 # Print only class names
 names = model.names
