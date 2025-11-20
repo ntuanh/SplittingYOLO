@@ -69,7 +69,7 @@ def forward_head(head_model, x_in):
             x_in = y[layer.f] if isinstance(layer.f, int) else [y[j] for j in layer.f]
 
         x_in = layer(x_in)  # forward
-        # y[layer.i] = x_in
+        y[layer.i] = x_in
 
     return x_in
 
