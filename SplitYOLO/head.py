@@ -53,7 +53,7 @@ transform = T.Compose([
     T.Resize((640, 640)),
     T.ToTensor(),
 ])
-x = transform(img).unsqueeze(0).to(device)
+x = transform(img).unsqueeze(0).repeat(2 , 1, 1, 1).to(device)
 # print(f"   Input image tensor shape: {x.shape}")
 
 # ==========================

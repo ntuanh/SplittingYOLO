@@ -91,20 +91,20 @@ def forward_tail(model, feature_map_in):
         y[layer.i] = current_x
     return current_x
 
-ram_before = get_ram()
-vram_before = reset_vram()
-t0 = time.time()
+# ram_before = get_ram()
+# vram_before = reset_vram()
+# t0 = time.time()
 
 with torch.no_grad():
     for _ in range(1000):
         preds = forward_tail(tail_model, feature_map)
 
-t1 = time.time()
-ram_after = get_ram()
-vram_after = get_vram()
-print(f"[Tail Forward] Time: {t1 - t0:.4f} s")
-print(f"[Tail Forward] RAM used: {ram_after - ram_before:.4f} MB")
-print(f"[Tail Forward] VRAM used: {vram_after - vram_before:.4f} MB")
+# t1 = time.time()
+# ram_after = get_ram()
+# vram_after = get_vram()
+# print(f"[Tail Forward] Time: {t1 - t0:.4f} s")
+# print(f"[Tail Forward] RAM used: {ram_after - ram_before:.4f} MB")
+# print(f"[Tail Forward] VRAM used: {vram_after - vram_before:.4f} MB")
 # ============================================================
 # 5. POSTPROCESS
 # ============================================================
