@@ -20,7 +20,7 @@ ram_before = get_ram()
 vram_before = reset_vram()
 t0 = time.time()
 
-cfg = yaml.safe_load(open('cfg/yolo11n.yaml', 'r', encoding='utf-8'))
+cfg = yaml.safe_load(open('cfg/tail.yaml', 'r', encoding='utf-8'))
 tail_model = DetectionModel(cfg, verbose=False).to(device)
 
 t1 = time.time()

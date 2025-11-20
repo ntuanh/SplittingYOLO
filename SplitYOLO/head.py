@@ -17,7 +17,7 @@ print(f"[DEVICE] {device}")
 
 cfg = yaml.safe_load(open('cfg/head.yaml', 'r', encoding='utf-8'))
 # yolo11.yaml
-model = DetectionModel(cfg, verbose=False).to(device)
+model = DetectionModel(cfg, verbose=False   ).to(device)
 
 # t1 = time.time()
 # ram_after_arch = get_ram()

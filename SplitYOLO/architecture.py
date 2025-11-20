@@ -4,7 +4,7 @@ from collections import OrderedDict
 
 # load origin model
 print("Loading original YOLOv11n model...")
-model = YOLO("yolo11n.pt").model
+model = YOLO("yolo11s.pt").model
 
 # get split layer
 split_index = 4
