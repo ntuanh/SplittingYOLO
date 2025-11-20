@@ -16,55 +16,55 @@ print(f"[DEVICE] {device}")
 # 1. LOAD ARCHITECTURE
 # ============================================================
 
-ram_before = get_ram()
-vram_before = reset_vram()
-t0 = time.time()
+# ram_before = get_ram()
+# vram_before = reset_vram()
+# t0 = time.time()
 
 cfg = yaml.safe_load(open('cfg/tail.yaml', 'r', encoding='utf-8'))
 tail_model = DetectionModel(cfg, verbose=False).to(device)
 
-t1 = time.time()
-ram_after = get_ram()
-vram_after = get_vram()
-print(f"[Architecture] Time: {t1 - t0:.4f} s")
-print(f"[Architecture] RAM used: {ram_after - ram_before:.4f} MB")
-print(f"[Architecture] VRAM used: {vram_after - vram_before:.4f} MB")
+# t1 = time.time()
+# ram_after = get_ram()
+# vram_after = get_vram()
+# print(f"[Architecture] Time: {t1 - t0:.4f} s")
+# print(f"[Architecture] RAM used: {ram_after - ram_before:.4f} MB")
+# print(f"[Architecture] VRAM used: {vram_after - vram_before:.4f} MB")
 
 # ============================================================
 # 2. LOAD PART2 WEIGHTS
 # ============================================================
 
-ram_before = get_ram()
-vram_before = reset_vram()
-t0 = time.time()
+# ram_before = get_ram()
+# vram_before = reset_vram()
+# t0 = time.time()
 
 state_dict_part2 = torch.load('part2.pt', map_location=device, weights_only=True)
 tail_model.load_state_dict(state_dict_part2, strict=False)
 tail_model.eval()
 
-t1 = time.time()
-ram_after = get_ram()
-vram_after = get_vram()
-print(f"[Weights] Time: {t1 - t0:.4f} s")
-print(f"[Weights] RAM used: {ram_after - ram_before:.4f} MB")
-print(f"[Weights] VRAM used: {vram_after - vram_before:.4f} MB")
+# t1 = time.time()
+# ram_after = get_ram()
+# vram_after = get_vram()
+# print(f"[Weights] Time: {t1 - t0:.4f} s")
+# print(f"[Weights] RAM used: {ram_after - ram_before:.4f} MB")
+# print(f"[Weights] VRAM used: {vram_after - vram_before:.4f} MB")
 
 # ============================================================
 # 3. LOAD FEATURE MAP
 # ============================================================
 
-ram_before = get_ram()
-vram_before = reset_vram()
-t0 = time.time()
+# ram_before = get_ram()
+# vram_before = reset_vram()
+# t0 = time.time()
 
 feature_map = torch.load('feature_map.pt', map_location=device, weights_only=True)
 
-t1 = time.time()
-ram_after = get_ram()
-vram_after = get_vram()
-print(f"[Feature Map] Time: {t1 - t0:.4f} s")
-print(f"[Feature Map] RAM used: {ram_after - ram_before:.4f} MB")
-print(f"[Feature Map] VRAM used: {vram_after - vram_before:.4f} MB")
+# t1 = time.time()
+# ram_after = get_ram()
+# vram_after = get_vram()
+# print(f"[Feature Map] Time: {t1 - t0:.4f} s")
+# print(f"[Feature Map] RAM used: {ram_after - ram_before:.4f} MB")
+# print(f"[Feature Map] VRAM used: {vram_after - vram_before:.4f} MB")
 
 # ============================================================
 # 4. FORWARD TAIL

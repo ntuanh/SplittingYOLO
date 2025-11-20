@@ -2,7 +2,7 @@
 
 # Parameters
 nc: 80
-scale: s
+scale: m
 scales:
   n: [0.50, 0.25, 1024]  # summary: 181 layers, 2624080 parameters, 2624064 gradients, 6.6 GFLOPs
   s: [0.50, 0.50, 1024]  # summary: 181 layers, 9458752 parameters, 9458736 gradients, 21.7 GFLOPs
