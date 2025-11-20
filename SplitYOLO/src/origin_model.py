@@ -158,21 +158,26 @@
 # SIMPLE Code with YOLO
 # ========================
 from ultralytics import YOLO
+import torch
+from PIL import Image
+import torchvision.transforms as T
 
 # Load model
-model = YOLO("yolov8n.pt")   # or yolov8n.pt
+model = YOLO("yolo11n.pt")
 
+# Load + transform image
+img = Image.open("./data/image.png").convert('RGB')
+transform = T.Compose([
+    T.Resize((640, 640)),
+    T.ToTensor(),
+])
+x = transform(img)  # [3, 640, 640]
+
+batch = x.unsqueeze(0).repeat(30, 1, 1, 1)  # [30, 3, 640, 640]
+
+batch = batch.to(model.device).float()
+
+# Inference 1000 lần
 for _ in range(1000):
-    results = model("./data/image640.png" , verbose=False)[0]
-
-# Print only class names
-names = model.names
-
-printed = set()  # avoid duplicate names
-for box in results.boxes:
-    cls_id = int(box.cls[0])
-    printed.add(names[cls_id])
-
-for name in printed:
-    print(name)
+    results = model(batch, verbose=False)
 
