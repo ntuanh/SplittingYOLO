@@ -115,3 +115,5 @@ if config["post_process"] == True :
     cv2.imshow("Detection Result", output_image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
+print("Inference done ")
