@@ -1,5 +1,5 @@
 cut_layer : 4
-batch_size : 1
+batch_size : 10
 head_architect : head
 tail_architect : tail
 nums_round : 1000
