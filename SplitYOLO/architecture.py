@@ -1,13 +1,18 @@
-import torch
+import torch , yaml
 from ultralytics import YOLO
 from collections import OrderedDict
+
+with open('cfg/config.yaml') as file:
+    config = yaml.safe_load(file)
 
 # load origin model
 print("Loading original YOLOv11n model...")
 model = YOLO("yolo11n.pt").model
 
 # get split layer
-split_index = 4
+split_index = int(config["cut_layer"])
+# split_index = 4
+# print(config["cut_layer"])
 print(f"\nSplitting model at layer index = {split_index}")
 
 # separate weight dict

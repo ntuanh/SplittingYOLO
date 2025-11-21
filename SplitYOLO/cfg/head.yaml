@@ -1,5 +1,3 @@
-# head.yaml (An toàn nhất, dùng nn.Identity cho tất cả các lớp giả)
-
 # Parameters
 nc: 80
 scale: n
