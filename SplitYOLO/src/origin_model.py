@@ -162,7 +162,7 @@ import torch , yaml
 from PIL import Image
 import torchvision.transforms as T
 
-with open('config.yaml') as file:
+with open('./cfg/config.yaml') as file:
     config = yaml.safe_load(file)
 
 # Load model
