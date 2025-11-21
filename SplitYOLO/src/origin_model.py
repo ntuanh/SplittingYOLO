@@ -158,9 +158,12 @@
 # SIMPLE Code with YOLO
 # ========================
 from ultralytics import YOLO
-import torch
+import torch , yaml
 from PIL import Image
 import torchvision.transforms as T
+
+with open('config.yaml') as file:
+    config = yaml.safe_load(file)
 
 # Load model
 model = YOLO("yolo11n.pt")
@@ -173,11 +176,11 @@ transform = T.Compose([
 ])
 x = transform(img)  # [3, 640, 640]
 
-batch = x.unsqueeze(0).repeat(30, 1, 1, 1)  # [30, 3, 640, 640]
+batch = x.unsqueeze(0).repeat(int(config["batch_size"]), 1, 1, 1)  # [30, 3, 640, 640]
 
 batch = batch.to(model.device).float()
 
 # Inference 1000 lần
-for _ in range(1000):
+for _ in range(int(config["nums_round"])):
     results = model(batch, verbose=False)
 
