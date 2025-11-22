@@ -4,7 +4,7 @@ from ultralytics.utils.plotting import Annotator, colors
 from ultralytics.models.yolo.detect import DetectionPredictor
 from ultralytics.utils import DEFAULT_CFG
 import numpy as np
-from src.Utils import get_ram, get_vram, reset_vram
+from src.Utils import get_ram, get_vram, reset_vram , extract_input_layer
 
 # ============================================================
 # 0. Pick device and config
@@ -25,6 +25,10 @@ else :
 
 cfg = yaml.safe_load(open(yaml_file, 'r', encoding='utf-8'))
 tail_model = DetectionModel(cfg, verbose=False).to(device)
+
+res_tail = extract_input_layer("yolo11n.yaml")["res_tail"]
+# print(res_tail)
+
 
 # ============================================================
 # 2. LOAD PART2 WEIGHTS
@@ -61,8 +65,11 @@ def forward_tail(model, feature_map_in):
                     x_in.append(current_x)
                 else:
                     x_in.append(y[from_index])
+                    y.pop(from_index , None)
         current_x = layer(x_in)
-        y[layer.i] = current_x
+        if layer.i in res_tail :
+            y[layer.i] = current_x
+        # print(f"[Layer index] {layer.i} [Size of y ] {len(y)}")
     return current_x
 
 with torch.no_grad():

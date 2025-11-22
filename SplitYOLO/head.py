@@ -40,15 +40,15 @@ x = transform(img).unsqueeze(0).repeat(int(config["batch_size"]), 1, 1, 1).to(de
 # ==========================
 def forward_head(head_model, x_in):
     split_index = config["cut_layer"]
-    y = {}  # store features map
+    # y = {}  # store features map
 
     for layer in head_model.model[:split_index]:
-        if layer.f != -1:  # get input from previous layer
-            pass
-            x_in = y[layer.f] if isinstance(layer.f, int) else [y[j] for j in layer.f]
+        # if layer.f != -1:  # get input from previous layer
+        #     pass
+        #     x_in = y[layer.f] if isinstance(layer.f, int) else [y[j] for j in layer.f]
 
         x_in = layer(x_in)  # forward
-        y[layer.i] = x_in
+        # y[layer.i] = x_in
 
     return x_in
 

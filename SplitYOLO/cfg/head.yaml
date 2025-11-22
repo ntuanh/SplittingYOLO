@@ -43,4 +43,5 @@ head:
 #  # Giữ lại lớp Detect và trỏ nó vào các lớp Identity
 #  # Điều này có thể gây lỗi vì Detect mong đợi các kênh cụ thể.
 #  # Cách tốt nhất là trỏ Detect vào lớp cuối cùng có thật.
+#  - []
   - [[3], 1, Detect, [nc]] # Trỏ Detect vào lớp 3 để tránh lỗi
