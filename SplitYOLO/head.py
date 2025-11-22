@@ -1,4 +1,4 @@
-import torch , yaml , time
+import torch , yaml , time, gc
 import torchvision.transforms as T
 from PIL import Image
 from ultralytics.nn.tasks import DetectionModel
