@@ -67,9 +67,13 @@ def forward_head(head_model, x_in):
 # 5. Forward pass + measure RAM and VRAM
 # ==========================
 
+time.sleep(2)
 with torch.inference_mode():
-    for _ in range(int(config["nums_round"])):
+    for i in range(int(config["nums_round"])):
         state_dict = forward_head(model, x)
+        if i % 20 == 0 :
+            gc.collect()  # dọn RAM CPU
+            torch.cuda.empty_cache() # dọn VRAM GPU
 
 # ==========================
 # 6. Save feature map
