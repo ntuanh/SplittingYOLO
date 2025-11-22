@@ -101,6 +101,7 @@
 # print(f"[Forward] VRAM used: {(vram_after - vram_before):.4f} MB")
 #
 # print("\nInference done.")
+import time
 
 # # ------------------------------
 # # Load model
@@ -180,6 +181,7 @@ batch = x.unsqueeze(0).repeat(int(config["batch_size"]), 1, 1, 1)  # [30, 3, 640
 
 batch = batch.to(model.device).float()
 
+time.sleep(10)
 # Inference 1000 lần
 for _ in range(int(config["nums_round"])):
     results = model(batch, verbose=False)
