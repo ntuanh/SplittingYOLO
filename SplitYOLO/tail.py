@@ -23,10 +23,13 @@ if config["head_architect"] == "tail" :
 else :
     yaml_file = 'cfg/yolo11n.yaml'
 
+print(f"YAML file {yaml_file}")
+
 cfg = yaml.safe_load(open(yaml_file, 'r', encoding='utf-8'))
 tail_model = DetectionModel(cfg, verbose=False).to(device)
 
 res_tail = extract_input_layer("yolo11n.yaml")["res_tail"]
+out_put =  extract_input_layer("yolo11n.yaml")["output"]
 # print(res_tail)
 
 
@@ -42,39 +45,30 @@ tail_model.eval()
 # 3. LOAD FEATURE MAP
 # ============================================================
 
-feature_map = torch.load('feature_map.pt', map_location=device, weights_only=True)
+state_dict  = torch.load('feature_map.pt', map_location=device, weights_only=True)
 
 # ============================================================
 # 4. FORWARD TAIL
 # ============================================================
-def forward_tail(model, feature_map_in):
+def forward_tail(model, state_dict):
     split_index = config["cut_layer"]
-    y = {}
-    current_x = feature_map_in
-    y[split_index - 1] = current_x
+    y = state_dict
+    y[-1] = y[split_index - 1]
     for layer in model.model[split_index:]:
         if isinstance(layer.f, int):
-            if layer.f == -1:
-                x_in = current_x
-            else:
-                x_in = y[layer.f]
+            x_in = y[layer.f]
         else:
-            x_in = []
-            for from_index in layer.f:
-                if from_index == -1:
-                    x_in.append(current_x)
-                else:
-                    x_in.append(y[from_index])
-                    y.pop(from_index , None)
-        current_x = layer(x_in)
+            x_in = y[layer.f] if isinstance(layer.f, int) else [y[j] for j in layer.f]
+            # y.pop(from_index , None)
+        x_in = layer(x_in)
         if layer.i in res_tail :
-            y[layer.i] = current_x
-        # print(f"[Layer index] {layer.i} [Size of y ] {len(y)}")
-    return current_x
+            y[layer.i] = x_in
+        y[-1] = x_in
+    return x_in
 
 with torch.no_grad():
     for _ in range(int(config["nums_round"])):
-        preds = forward_tail(tail_model, feature_map)
+        preds = forward_tail(tail_model, state_dict)
 
 # ============================================================
 # 5. POSTPROCESS
@@ -119,8 +113,8 @@ if config["post_process"] == True :
     else:
         output_image = orig_imgs[0]
 
-    cv2.imshow("Detection Result", output_image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # cv2.imshow("Detection Result", output_image)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
 
 print("Inference done ")

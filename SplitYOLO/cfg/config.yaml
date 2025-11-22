@@ -1,6 +1,6 @@
-cut_layer : 4
-batch_size : 30
-head_architect : head
-tail_architect : tail
-nums_round : 1000
-post_process : False
+cut_layer : 12
+batch_size : 1
+head_architect : yolo11  # head or yolo11( diff head )
+tail_architect : yolo11
+nums_round : 1
+post_process : True

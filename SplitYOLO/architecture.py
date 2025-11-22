@@ -31,8 +31,6 @@ for key in keys :
 
 print(f"Full state dict length :{len(full_state_dict)}")
 print(f"Full state dict type :{type(full_state_dict)}")
-# print(f"Part1 state dict length :{len(part2_state_dict)}")
-# print(f"Part2 state dict length :{len(part1_state_dict)}")
 print("   Processing state_dict keys...")
 for key, value in full_state_dict.items():
     if not key.startswith('model.'):

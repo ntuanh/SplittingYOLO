@@ -38,8 +38,11 @@ def extract_input_layer(file_name ):
     for pair in lst :
         if pair[0] < cut_layer and  pair[1] < cut_layer :
             res_dict["res_head"].append(pair[0])
-        elif pair[0] < cut_layer and pair[1] > cut_layer :
-            res_dict["output"].append(pair[0])
+        elif pair[0] < cut_layer and pair[1] >= cut_layer :
+            if pair[0] in res_dict["output"]:
+                pass
+            else :
+                res_dict["output"].append(pair[0])
         else:
             res_dict["res_tail"].append(pair[0])
 
