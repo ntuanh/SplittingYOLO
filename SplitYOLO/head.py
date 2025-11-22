@@ -20,19 +20,28 @@ with open('cfg/config.yaml') as file:
     config = yaml.safe_load(file)
 
 
-if config["head_architect"] == "head" :
-    yaml_file = 'cfg/head.yaml'
-else :
-    yaml_file = 'cfg/yolo11n.yaml'
-
-print(f"YAML file {yaml_file}")
+# if config["head_architect"] == "head" :
+yaml_file = 'cfg/head.yaml'
 cfg = yaml.safe_load(open(yaml_file, 'r', encoding='utf-8'))
-model = DetectionModel(cfg, verbose=False ).to(device)
+model = DetectionModel(cfg, verbose=False).to(device)
+time.sleep(10)
+# else :
+yaml_file = 'cfg/yolo11n.yaml'
+cfg = yaml.safe_load(open(yaml_file, 'r', encoding='utf-8'))
+model = DetectionModel(cfg, verbose=False).to(device)
+time.sleep(10)
 
+# print(f"YAML file {yaml_file}")
+# cfg = yaml.safe_load(open(yaml_file, 'r', encoding='utf-8'))
+# model = DetectionModel(cfg, verbose=False ).to(device)
+
+time.sleep(10)
 
 state_dict_part1 = torch.load('part1.pt', map_location=device, weights_only=True)
 model.load_state_dict(state_dict_part1, strict=False)
 model.eval()
+
+time.sleep(10)
 
 img = Image.open('data/image.png').convert('RGB')
 w, h = img.size
