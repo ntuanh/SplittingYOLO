@@ -4,66 +4,47 @@ from PIL import Image
 from ultralytics.nn.tasks import DetectionModel
 from src.Utils import get_ram, get_vram, reset_vram, extract_input_layer
 
-
 # ==========================
-# HELPER: Cắt gọt Config để giảm RAM khởi tạo
+# 1. SETUP
 # ==========================
-def prune_config(cfg, cut_layer):
-    """
-    Cắt bỏ các định nghĩa layer thừa trong config dictionary.
-    Giúp DetectionModel không khởi tạo các layer phía sau cut_layer.
-    """
-    # Tính tổng số layer hiện tại trong backbone
-    len_backbone = len(cfg['backbone'])
+# Tắt tính toán Gradient để tiết kiệm RAM
+torch.set_grad_enabled(False)
 
-    if cut_layer <= len_backbone:
-        # Nếu cắt ngay trong backbone -> Xóa hết head, cắt bớt backbone
-        cfg['backbone'] = cfg['backbone'][:cut_layer]
-        cfg['head'] = []
-    else:
-        # Nếu cắt ở head -> Giữ backbone, cắt bớt head
-        # Index trong head bắt đầu từ 0, nên cần trừ đi độ dài backbone
-        head_keep_count = cut_layer - len_backbone
-        cfg['head'] = cfg['head'][:head_keep_count]
-
-    print(f"[Config] Pruned model structure. Keep first {cut_layer} layers.")
-    return cfg
-
-
-# ==========================
-# HELPER: Load trọng số an toàn (Tránh kẹt RAM)
-# ==========================
-def load_weights_safe(model, path, device):
-    print(f"[Weights] Loading {path} ...")
-    # Load lên CPU trước để tránh đầy VRAM đột ngột
-    ckpt = torch.load(path, map_location='cpu', weights_only=True)
-
-    # Chỉ lấy state_dict (xử lý nếu file là checkpoint full)
-    state_dict = ckpt['model'].state_dict() if 'model' in ckpt else ckpt
-
-    # Lọc trọng số: Chỉ nạp những layer có trong model đã cắt gọt
-    model_state = model.state_dict()
-    # Chỉ giữ lại key nào khớp cả tên lẫn kích thước
-    filtered_dict = {k: v for k, v in state_dict.items() if k in model_state and v.shape == model_state[k].shape}
-
-    model.load_state_dict(filtered_dict, strict=False)
-
-    # Xóa ngay biến tạm
-    del ckpt, state_dict, filtered_dict
-    gc.collect()
-    print("[Weights] Loaded and RAM cleaned.")
-
-
-# ==========================
-# 1. Pick device and load model architecture
-# ==========================
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"[DEVICE] {device}")
 
-# Lấy thông tin layer cần output (Vẫn đọc từ file gốc để lấy index chuẩn)
+
+# ==========================
+# HELPER: Load trọng số tối ưu (Dùng mmap)
+# ==========================
+def load_weights_optimized(model, path):
+    print(f"[Weights] Loading {path}...")
+    try:
+        # mmap=True: Đọc file từ ổ cứng, không copy vào RAM
+        ckpt = torch.load(path, map_location='cpu', weights_only=True, mmap=True)
+    except:
+        # Fallback nếu mmap không hỗ trợ (hiếm gặp)
+        print("[Warning] mmap failed, using standard load")
+        ckpt = torch.load(path, map_location='cpu', weights_only=True)
+
+    # Lấy state_dict
+    state_dict = ckpt['model'].state_dict() if 'model' in ckpt else ckpt
+
+    # Nạp vào model (strict=False để bỏ qua các layer không khớp nếu có)
+    model.load_state_dict(state_dict, strict=False)
+
+    # Xóa ngay biến tạm
+    del ckpt, state_dict
+    gc.collect()
+    print("[Weights] Loaded & RAM cleaned.")
+
+
+# ==========================
+# 2. INIT MODEL (GIỮ NGUYÊN LOGIC GỐC)
+# ==========================
+# Lấy thông tin layer output
 output = extract_input_layer("yolo11n.yaml")["output"]
 res_head = extract_input_layer("yolo11n.yaml")["res_head"]
-
 print(f"Res Head: {res_head}")
 print(f"Output: {output}")
 
@@ -76,85 +57,95 @@ else:
     yaml_file = 'cfg/yolo11n.yaml'
 
 print(f"YAML file {yaml_file}")
+cfg = yaml.safe_load(open(yaml_file, 'r', encoding='utf-8'))
 
-# --- TỐI ƯU: Load YAML -> Cắt gọt -> Mới tạo Model ---
-raw_cfg = yaml.safe_load(open(yaml_file, 'r', encoding='utf-8'))
-cut_layer_idx = config["cut_layer"]
+# Khởi tạo model đầy đủ (Để đảm bảo layer index đúng tuyệt đối)
+model = DetectionModel(cfg, verbose=False)
 
-# Cắt config trước khi đưa vào DetectionModel -> Tiết kiệm RAM nhất
-pruned_cfg = prune_config(raw_cfg, cut_layer_idx)
+# Load weights bằng mmap
+load_weights_optimized(model, 'part1.pt')
 
-# Model được tạo ra chỉ chứa đúng số layer cần thiết
-model = DetectionModel(pruned_cfg, verbose=False).to(device)
+# Đẩy model sang GPU
+model.to(device)
+model.eval()
+
+# Dọn dẹp RAM sau khi khởi tạo
+gc.collect()
+torch.cuda.empty_cache()
 
 time.sleep(config["time_sleep"])
 
-# --- TỐI ƯU: Load weights qua hàm helper ---
-load_weights_safe(model, 'part1.pt', device)
-
-# Dọn dẹp lần cuối
-torch.cuda.empty_cache()
-
-model.eval()
-
+# ==========================
+# 3. PREPARE INPUT (FIX QUAN TRỌNG NHẤT: GIẢM 300MB RAM)
+# ==========================
 img = Image.open('data/image.png').convert('RGB')
 w, h = img.size
 print(f"[Image size] {w}x{h}")
+
 transform = T.Compose([
     T.Resize((640, 640)),
     T.ToTensor(),
 ])
-x = transform(img).unsqueeze(0).repeat(int(config["batch_size"]), 1, 1, 1).to(device)
+
+# BƯỚC QUAN TRỌNG: Đẩy 1 ảnh sang GPU TRƯỚC KHI nhân bản
+# 1. Transform 1 ảnh
+x_single = transform(img).unsqueeze(0)  # Size: [1, 3, 640, 640] - Rất nhẹ
+
+# 2. Đẩy sang GPU ngay lập tức
+x_single = x_single.to(device)
+
+# 3. Nhân bản (Repeat) ngay trên GPU
+# RAM CPU sẽ KHÔNG bị tốn thêm 300MB để chứa batch size 30
+x = x_single.repeat(int(config["batch_size"]), 1, 1, 1)
 
 
 # ==========================
-# 4. Forward head function
+# 4. FORWARD HEAD FUNCTION (GIỮ NGUYÊN LOGIC GỐC)
 # ==========================
 def forward_head(head_model, x_in):
-    # Model đã được cắt gọt, nên len(head_model.model) chính bằng split_index
-    # Ta duyệt qua tất cả các layer hiện có trong model
-
+    split_index = config["cut_layer"]
     y = {}  # store features map
     y[-1] = x_in
     state = {}
 
-    # Lưu ý: head_model.model bây giờ ngắn hơn model gốc, nhưng thuộc tính layer.i (index)
-    # và layer.f (from) vẫn được Ultralytics giữ đúng theo thứ tự topo.
-    for layer in head_model.model:
+    # Chạy đúng số layer cần thiết
+    # Lưu ý: Vì ta dùng Model gốc (không cắt YAML), nên dùng slice [:split_index] là chuẩn xác nhất
+    for layer in head_model.model[:split_index]:
         x_in = y[layer.f] if isinstance(layer.f, int) else [y[j] for j in layer.f]
         x_in = layer(x_in)  # forward
 
-        # Logic giữ nguyên để tương thích tail.py
+        # Logic lưu output y hệt code cũ của bạn
         if layer.i in output:
             state[layer.i] = x_in
         elif layer.i in res_head:
             y[layer.i] = x_in
-
         y[-1] = x_in
 
     return state
 
 
 # ==========================
-# 5. Forward pass + measure RAM and VRAM
+# 5. RUN LOOP
 # ==========================
-
 time.sleep(config["time_sleep"])
-print("Starting inference loop...")
+print("Starting inference...")
+
+# Dọn rác lần cuối
 gc.collect()
 
 with torch.inference_mode():
     for i in range(int(config["nums_round"])):
         state_dict = forward_head(model, x)
-        # if i % 20 == 0 :
-        # gc.collect()  # dọn RAM CPU
-        # torch.cuda.empty_cache() # dọn VRAM GPU
+
+        # Tùy chọn: Nếu VRAM bị đầy, bỏ comment dòng dưới (nhưng sẽ chậm hơn)
+        # if i % 20 == 0: torch.cuda.empty_cache()
 
 # ==========================
-# 6. Save feature map
+# 6. SAVE
 # ==========================
-
 print(f"[Type] {type(state_dict)}")
-print(f"[Keys] {state_dict.keys()}")
+print(f"[Keys] {state_dict.keys()}")  # In ra để kiểm tra có đúng key không
+
+# Save
 torch.save(state_dict, 'feature_map.pt')
 print("\nSaved single feature map to 'feature_map.pt'")
