@@ -165,12 +165,12 @@ import torchvision.transforms as T
 from ultralytics.utils import DEFAULT_CFG
 from ultralytics.models.yolo.detect import DetectionPredictor
 
+
 with open('./cfg/config.yaml') as file:
     config = yaml.safe_load(file)
 
 # Load model
-# model = YOLO("yolo11n.pt")
-model = YOLO("./cfg/yolo11n.yaml")
+model = YOLO("yolo11n.pt")
 
 # Load + transform image
 img = Image.open("./data/image.png").convert('RGB')
@@ -184,10 +184,10 @@ batch = x.unsqueeze(0).repeat(int(config["batch_size"]), 1, 1, 1)  # [30, 3, 640
 
 batch = batch.to(model.device).float()
 
-time.sleep(10)
+time.sleep(config["time_sleep"])
 # Inference 1000 lần
 for _ in range(int(config["nums_round"])):
-    preds = model(batch, verbose=False)
+    result = model(batch, verbose=False)
 
 # ============================================================
 # 5. POSTPROCESS
@@ -197,6 +197,7 @@ for _ in range(int(config["nums_round"])):
 if config["post_process"] == True :
     args = DEFAULT_CFG
     args.imgsz = 640
+    preds= result
     custom_predictor = DetectionPredictor(overrides=vars(args))
     custom_predictor.model = model
 

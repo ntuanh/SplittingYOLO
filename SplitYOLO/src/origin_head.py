@@ -25,3 +25,5 @@ time.sleep(config["time_sleep"])
 # Inference a lot of times
 for _ in range(int(config["nums_round"])):
     results = model(batch, verbose=False)
+
+print("Inference head done !")
