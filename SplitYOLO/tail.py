@@ -18,7 +18,7 @@ with open('cfg/config.yaml') as file:
 # ============================================================
 # 1. LOAD ARCHITECTURE
 # ============================================================
-if config["head_architect"] == "tail" :
+if config["tail_architect"] == "tail" :
     yaml_file = 'cfg/tail.yaml'
 else :
     yaml_file = 'cfg/yolo11n.yaml'
