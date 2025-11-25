@@ -1,7 +1,7 @@
 cut_layer : 12
 batch_size : 30
 head_architect : head  # head or yolo11( diff head )
-tail_architect : yolo11
-nums_round : 50
-post_process : True
-time_sleep : 7
+tail_architect : tail
+nums_round : 100
+post_process : False
+time_sleep : 2
