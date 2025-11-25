@@ -15,7 +15,7 @@ missing, unexpected = model.model.load_state_dict(state_dict_part1, strict=False
 torch.save({
     "model": model.model,                  # nn.Module
     "model_state_dict": model.model.state_dict(),  # state_dict after update
-    "yaml": "yolo11n.yaml",                # YAML of model
+    "yaml": "head.yaml",                # YAML of model
     "names": model.names,                  # class names
     "task": "detect"
 }, "model_new.pt")
