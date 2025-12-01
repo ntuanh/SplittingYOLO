@@ -51,14 +51,30 @@ Traditional YOLO models require substantial memory for inference, which can be p
 
 ## Usage
 
-1. **Split the Model**:
-   Run `architecture.py` to split the model weights:
-   ```bash
-   python SplitYOLO/architecture.py
-   ```
-   This generates `part1.pt` and `part2.pt`.
+### 1. Split the Model
 
-2. **Run Head Inference**:
+Run `architecture.py` to split the YOLO11n model weights into two parts:
+```bash
+python SplitYOLO/architecture.py
+```
+This generates:
+- `part1.pt`: Head layers (initial processing)
+- `part2.pt`: Tail layers (final processing)
+
+### Measure RAM Usage on Jetson Nano
+
+**Important**: Before running inference on Jetson Nano, start the RAM measurement command in a separate terminal to monitor system resource usage:
+```bash
+sudo tegrastats --interval 1000 > tegrastats.log
+```
+This command:
+- Runs `tegrastats` with a 1000ms sampling interval
+- Logs all metrics to `tegrastats.log`
+- Captures CPU, GPU, RAM, and temperature data during model execution
+
+**Note**: Keep this running in a separate terminal window while executing the remaining split model steps.
+
+### 2. Run Head Inference:
    On the first device, execute `head.py` to process the input image through the head layers:
    ```bash
    python SplitYOLO/head.py
