@@ -1,43 +1,49 @@
 import torch, yaml, time, gc
 import torchvision.transforms as T
 from PIL import Image
-from ultralytics import YOLO
-
-from SplittingYOLO.SplitYOLO.architecture2 import full_model
-from src.Utils import get_ram, get_vram, reset_vram, extract_input_layer
+from SplittingYOLO.SplitYOLO.architecture2 import new_model
 
 
-# ==========================
-# 1. SETUP
-# ==========================
+"""
+Vì khi gọi YOLO("yolo11n.pt") để chạy forward người ta chỉ lấy cái model bên trong của file
+nên mình chỉ cần thay đổi cái model và vài tham số bên trong và dùng luôn cái model đấy
+không cần thay đổi các tham số khác
+"""
 torch.set_grad_enabled(False)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"[DEVICE] {device}")
+# Code lại hàm forward của ultralytics
+# Return về features_map của các layers cần save
+def my_new_predict_once(self, x):
+    y = []# outputs
+    features_map = {}
+    for m in self.model:
+        if m.f != -1:  # if not from previous layer
+            x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
 
+        x = m(x)  # run
+        y.append(x if m.i in self.save else None)  # save output
+    for i in self.save:
+        features_map[i] = y[i]
+    return features_map
 
-# ==========================
-# 2. INIT MODEL
-# ==========================
-output = extract_input_layer("yolo11n.yaml")["output"]
-res_head = extract_input_layer("yolo11n.yaml")["res_head"]
-print(f"Res Head: {res_head}")
-print(f"Output: {output}")
+#Thay đổi hàm _predict_once của người ta thành của mình
+new_model._predict_once = my_new_predict_once.__get__(new_model, new_model.__class__)
+
 
 with open('cfg/config.yaml') as file:
     config = yaml.safe_load(file)
 
-model = YOLO("model_new.pt")
-model.to(device)
-model.eval()
 
 gc.collect()
 torch.cuda.empty_cache()
 
 time.sleep(config["time_sleep"])
 
+
 # ==========================
-# 3. PREPARE INPUT
+#  PREPARE INPUT
 # ==========================
 img = Image.open('data/image.png').convert('RGB')
 w, h = img.size
@@ -48,55 +54,30 @@ transform = T.Compose([
     T.ToTensor(),
 ])
 
-x_single = transform(img).unsqueeze(0)
-
-x_single = x_single.to(device).float()
-
+x_single = transform(img).unsqueeze(0).to(device).float()
 x = x_single.repeat(int(config["batch_size"]), 1, 1, 1)
 
 
-
-
 # ==========================
-# 4. RUN LOOP
+#  RUN LOOP
 # ==========================
-# time.sleep(config["time_sleep"])
 print("Starting inference...")
 
 
-# 2. Tạo dict để lưu feature map
-features = {}
-
-# 3. Hàm hook để bắt feature
-def hook_fn(name):
-    def hook(module, input, output):
-        features[name] = output
-    return hook
-
-# 4. Gắn hook vào tất cả layer có output
-for name, layer in full_model.named_modules():
-    # chỉ lấy những layer có forward (Conv, C2f, SPPF, Detect,...)
-    layer.register_forward_hook(hook_fn(name))
-
-
-
-# 5. Forward ảnh
+# ----- FORWARD -----
 with torch.inference_mode():
-    for i in range(int(config["nums_round"])):
-        _ = model(x)
+    for _ in range(int(config["nums_round"])):
+        state_dict = new_model._predict_once(x)
 
-# 7. Xem tên các feature map
-print(features.keys())
-# Dọn rác lần cuối
+print(state_dict)
+
+
 gc.collect()
 
 
 # ==========================
-# 6. SAVE
+# 6. SAVE FEATURES
 # ==========================
-print(f"[Type] {type(features)}")
-print(f"[Keys] {features.keys()}")
-
-# Save
-torch.save(features, 'feature_map.pt')
+print(f"[Type] {type(state_dict)}")
+torch.save(state_dict, 'feature_map.pt')
 print("\nSaved single feature map to 'feature_map.pt'")
