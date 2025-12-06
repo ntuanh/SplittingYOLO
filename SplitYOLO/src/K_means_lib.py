@@ -13,7 +13,7 @@ from scipy.spatial.distance import cdist
 
 NUM_CLUSTERS = 2
 RANDOM_STATE = 42
-RUNS = 10_000
+RUNS = 1000 # Number of times to run K-means
 
 
 # =====================
