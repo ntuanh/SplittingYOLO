@@ -13,14 +13,14 @@ from scipy.spatial.distance import cdist
 
 NUM_CLUSTERS = 2
 RANDOM_STATE = 42
-RUNS = 10000
+RUNS = 10_000
 
 
 # =====================
 # LOAD DATA
 # =====================
 
-data = pd.read_csv("data_device.csv")
+data = pd.read_csv("../data/data_device.csv")
 raw_points = np.delete(data.values, 0, axis=1)
 
 
