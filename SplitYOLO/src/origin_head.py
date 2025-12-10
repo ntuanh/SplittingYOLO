@@ -1,29 +1,62 @@
-import torch , yaml , time
+import torch
+import yaml
+import time
 from ultralytics import YOLO
 from PIL import Image
 import torchvision.transforms as T
 
-with open('cfg/config.yaml') as file:
-    config = yaml.safe_load(file)
+# -------------------------
+# Load config
+# -------------------------
+with open("cfg/config.yaml") as f:
+    config = yaml.safe_load(f)
 
-# Load model
-model = YOLO("model_new.pt")
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-# Load + transform image
-img = Image.open("data/image.png").convert('RGB')
+# -------------------------
+# Load HEAD checkpoint
+# -------------------------
+ckpt = torch.load("model_new.pt", map_location="cpu")
+
+model = YOLO(ckpt["yaml"], task="detect")
+model.model.load_state_dict(ckpt["model_state_dict"])
+model.model.names = ckpt.get("names")
+model.model.to(DEVICE).eval()
+
+print("HEAD loaded on:", DEVICE)
+
+# -------------------------
+# Load + preprocess image
+# -------------------------
+img = Image.open("data/image.png").convert("RGB")
+
 transform = T.Compose([
     T.Resize((640, 640)),
-    T.ToTensor(),
+    T.ToTensor()
 ])
-x = transform(img)  # [3, 640, 640]
 
-batch = x.unsqueeze(0).repeat(int(config["batch_size"]), 1, 1, 1)  # [30, 3, 640, 640]
+x = transform(img)
 
-batch = batch.to(model.device).float()
+batch = x.unsqueeze(0).repeat(
+    int(config["batch_size"]), 1, 1, 1
+).to(DEVICE).float()
 
+# -------------------------
+# Run HEAD forward
+# -------------------------
 time.sleep(config["time_sleep"])
-# Inference a lot of times
-for _ in range(int(config["nums_round"])):
-    results = model(batch, verbose=False)
 
-print("Inference head done !")
+print("Running head inference...")
+
+with torch.no_grad():
+    for _ in range(int(config["nums_round"])):
+        features = model.model(batch)     # ✅ RAW forward only
+
+print("Feature tensor shape:", features.shape)
+
+# -------------------------
+# Save features for tail
+# -------------------------
+torch.save(features, "features.pt")
+
+print("Head inference finished, features saved.")

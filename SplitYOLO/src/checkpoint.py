@@ -11,10 +11,21 @@ from ultralytics.nn.tasks import DetectionModel
 #     config = yaml.safe_load(file)
 
 # Load model
-model = YOLO("yolo11n.pt")
+# model = YOLO("yolo11n.pt")
+#
+# detection_model = DetectionModel("../cfg/head.yaml" )
+#
+# print(f"[Type] {type(model)}")
+#
+# print(f"model of model {type(model.model)}")
 
-detection_model = DetectionModel("../cfg/head.yaml" )
+import torch
 
-print(f"[Type] {type(model)}")
+ckpt = torch.load("yolo11n.pt", map_location="cpu")
+print(type(ckpt['model']))
+print(type(ckpt['model'].state_dict().keys()))
+print(ckpt['model'].state_dict().keys())
 
-print(f"model of model {type(model.model)}")
+# print(type(ckpt))
+# print(ckpt.keys())
+
