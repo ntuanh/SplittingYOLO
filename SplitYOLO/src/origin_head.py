@@ -35,11 +35,12 @@ transform = T.Compose([
     T.ToTensor()
 ])
 
-x = transform(img)
+x = transform(img)  # [3, 640, 640]
 
-batch = x.unsqueeze(0).repeat(
-    int(config["batch_size"]), 1, 1, 1
-).to(DEVICE).float()
+batch_size = int(config["batch_size"])
+
+# ✅ NO DATA COPYING
+batch = x.unsqueeze(0).expand(batch_size, -1, -1, -1).to(DEVICE).float()
 
 # -------------------------
 # Run HEAD forward
@@ -50,13 +51,19 @@ print("Running head inference...")
 
 with torch.no_grad():
     for _ in range(int(config["nums_round"])):
-        features = model.model(batch)     # ✅ RAW forward only
+        features = model.model(batch)
 
-print("Feature tensor shape:", features.shape)
+        # ✅ FP16 compress & offload
+        features = features.half().cpu()
+
+        # ✅ drop GPU memory immediately
+        del batch
+        torch.cuda.empty_cache()
 
 # -------------------------
-# Save features for tail
+# Save ONE feature sample
 # -------------------------
 torch.save(features, "features.pt")
 
+print("Feature tensor shape:", features.shape)
 print("Head inference finished, features saved.")
