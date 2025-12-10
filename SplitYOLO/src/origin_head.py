@@ -22,7 +22,7 @@ model = YOLO(ckpt["yaml"], task="detect")
 model.model.load_state_dict(ckpt["model_state_dict"])
 model.model.names = ckpt.get("names")
 
-# ✅ chuyển model sang FP16
+# convert to FP16
 model.model = model.model.to(DEVICE).half().eval()
 
 # -------------------------
@@ -39,7 +39,7 @@ x = transform(img)
 
 N = int(config["batch_size"])
 
-# ✅ expand() → KHÔNG copy memory
+# expand not copy
 batch = x.unsqueeze(0).expand(N, -1, -1, -1).to(DEVICE).half()
 
 time.sleep(config["time_sleep"])
@@ -48,9 +48,10 @@ time.sleep(config["time_sleep"])
 # HEAD inference
 # -------------------------
 with torch.inference_mode():
-    features = model.model(batch)
+    for _ in range(config["nums_round"]):
+        features = model.model(batch)
 
-# ✅ offload sang RAM
+# offload to RAM
 features = features.cpu()
 torch.save(features, "features.pt")
 
