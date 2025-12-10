@@ -14,19 +14,19 @@ with open("cfg/config.yaml") as f:
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # -------------------------
-# Load HEAD checkpoint
+# Load model HEAD
 # -------------------------
 ckpt = torch.load("model_new.pt", map_location="cpu")
 
 model = YOLO(ckpt["yaml"], task="detect")
 model.model.load_state_dict(ckpt["model_state_dict"])
 model.model.names = ckpt.get("names")
-model.model.to(DEVICE).eval()
 
-print("HEAD loaded on:", DEVICE)
+# ✅ chuyển model sang FP16
+model.model = model.model.to(DEVICE).half().eval()
 
 # -------------------------
-# Load + preprocess image
+# Prepare batch
 # -------------------------
 img = Image.open("data/image.png").convert("RGB")
 
@@ -35,33 +35,24 @@ transform = T.Compose([
     T.ToTensor()
 ])
 
-x = transform(img)  # [3, 640, 640]
+x = transform(img)
 
-batch_size = int(config["batch_size"])
+N = int(config["batch_size"])
 
-# ✅ NO DATA COPYING
-batch = x.unsqueeze(0).expand(batch_size, -1, -1, -1).to(DEVICE).float()
+# ✅ expand() → KHÔNG copy memory
+batch = x.unsqueeze(0).expand(N, -1, -1, -1).to(DEVICE).half()
 
-# -------------------------
-# Run HEAD forward
-# -------------------------
 time.sleep(config["time_sleep"])
 
-print("Running head inference...")
-
-with torch.no_grad():
-    for _ in range(int(config["nums_round"])):
-        features = model.model(batch)
-        del features
-        torch.cuda.empty_cache()
-
-# last run for saving
-with torch.no_grad():
+# -------------------------
+# HEAD inference
+# -------------------------
+with torch.inference_mode():
     features = model.model(batch)
 
-features = features.half().cpu()
+# ✅ offload sang RAM
+features = features.cpu()
 torch.save(features, "features.pt")
 
-print("Feature tensor shape:", features.shape)
-print("Head inference finished, features saved.")
-
+print("Feature shape:", features.shape)
+print("Head inference done.")
