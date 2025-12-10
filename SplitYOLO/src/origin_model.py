@@ -7,8 +7,8 @@ from ultralytics.utils import DEFAULT_CFG
 from ultralytics.models.yolo.detect import DetectionPredictor
 
 
-# with open('./cfg/config.yaml') as file:
-#     config = yaml.safe_load(file)
+with open('./cfg/config.yaml') as file:
+    config = yaml.safe_load(file)
 
 # Load model
 model = YOLO("yolo11n.pt")
