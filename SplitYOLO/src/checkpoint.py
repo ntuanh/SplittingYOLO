@@ -1,0 +1,20 @@
+import time
+from ultralytics import YOLO
+import torch , yaml , cv2
+from PIL import Image
+import torchvision.transforms as T
+from ultralytics.utils import DEFAULT_CFG
+from ultralytics.models.yolo.detect import DetectionPredictor
+from ultralytics.nn.tasks import DetectionModel
+
+# with open('./cfg/config.yaml') as file:
+#     config = yaml.safe_load(file)
+
+# Load model
+model = YOLO("yolo11n.pt")
+
+detection_model = DetectionModel("../cfg/head.yaml" )
+
+print(f"[Type] {type(model)}")
+
+print(f"model of model {type(model.model)}")

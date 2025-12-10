@@ -3,14 +3,14 @@ from ultralytics import YOLO
 from PIL import Image
 import torchvision.transforms as T
 
-with open('./cfg/config.yaml') as file:
+with open('cfg/config.yaml') as file:
     config = yaml.safe_load(file)
 
 # Load model
 model = YOLO("model_new.pt")
 
 # Load + transform image
-img = Image.open("./data/image.png").convert('RGB')
+img = Image.open("data/image.png").convert('RGB')
 transform = T.Compose([
     T.Resize((640, 640)),
     T.ToTensor(),
