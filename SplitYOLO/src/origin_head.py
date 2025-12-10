@@ -52,18 +52,16 @@ print("Running head inference...")
 with torch.no_grad():
     for _ in range(int(config["nums_round"])):
         features = model.model(batch)
-
-        # ✅ FP16 compress & offload
-        features = features.half().cpu()
-
-        # ✅ drop GPU memory immediately
-        del batch
+        del features
         torch.cuda.empty_cache()
 
-# -------------------------
-# Save ONE feature sample
-# -------------------------
+# last run for saving
+with torch.no_grad():
+    features = model.model(batch)
+
+features = features.half().cpu()
 torch.save(features, "features.pt")
 
 print("Feature tensor shape:", features.shape)
 print("Head inference finished, features saved.")
+
