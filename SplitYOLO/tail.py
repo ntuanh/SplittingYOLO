@@ -6,18 +6,17 @@ from ultralytics.utils import DEFAULT_CFG
 import numpy as np
 from src.Utils import get_ram, get_vram, reset_vram , extract_input_layer
 
-# ============================================================
-# 0. Pick device and config
-# ============================================================
+# Pick device and config
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"[DEVICE] {device}")
 
 with open('cfg/config.yaml') as file:
     config = yaml.safe_load(file)
 
-# ============================================================
-# 1. LOAD ARCHITECTURE
-# ============================================================
+
+# Load architect of tail 
+
 if config["tail_architect"] == "tail" :
     yaml_file = 'cfg/tail.yaml'
 else :
@@ -26,30 +25,23 @@ else :
 print(f"YAML file {yaml_file}")
 
 cfg = yaml.safe_load(open(yaml_file, 'r', encoding='utf-8'))
-tail_model = DetectionModel(cfg, verbose=False).to(device)
+model = DetectionModel(cfg, verbose=False).to(device)
 
 res_tail = extract_input_layer("yolo11n.yaml")["res_tail"]
 out_put =  extract_input_layer("yolo11n.yaml")["output"]
 # print(res_tail)
 
-
-# ============================================================
-# 2. LOAD PART2 WEIGHTS
-# ============================================================
+# Load part 2 weights for tail 
 
 state_dict_part2 = torch.load('part2.pt', map_location=device, weights_only=True)
-tail_model.load_state_dict(state_dict_part2, strict=False)
-tail_model.eval()
+model.load_state_dict(state_dict_part2, strict=False)
+model.eval()
 
-# ============================================================
-# 3. LOAD FEATURE MAP
-# ============================================================
+# Load feature map ( input for tail model ) 
 
 state_dict  = torch.load('feature_map.pt', map_location=device, weights_only=True)
 
-# ============================================================
-# 4. FORWARD TAIL
-# ============================================================
+
 def forward_tail(model, state_dict):
     split_index = config["cut_layer"]
     y = state_dict
@@ -67,19 +59,19 @@ def forward_tail(model, state_dict):
     return x_in
 
 with torch.no_grad():
+    model = model.half()
     for _ in range(int(config["nums_round"])):
-        preds = forward_tail(tail_model, state_dict)
+        preds = forward_tail(model, state_dict)
 
-# ============================================================
-# 5. POSTPROCESS
-# ============================================================
 
-# print(type(config["post_process"]))
+# POSTPROCESS
+
+
 if config["post_process"] == True :
     args = DEFAULT_CFG
     args.imgsz = 640
     custom_predictor = DetectionPredictor(overrides=vars(args))
-    custom_predictor.model = tail_model
+    custom_predictor.model = model
 
     # load origin img and parameters
     original_img_path = 'data/image.png'
@@ -95,9 +87,9 @@ if config["post_process"] == True :
     results = custom_predictor.postprocess(preds, dummy_im, orig_imgs)
     result = results[0]
 
-    # ============================================================
+    
     # 6. DRAW OUTPUT
-    # ============================================================
+    
     boxes = result.boxes
     if len(boxes) > 0:
         annotator = Annotator(orig_imgs[0], line_width=2, example=str(result.names))
