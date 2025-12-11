@@ -78,10 +78,9 @@ transform = T.Compose([
 
 x_single = transform(img).unsqueeze(0)
 
-x_single = x_single.to(device).float()
-
+x_single = x_single.to(device).half()
 x = x_single.repeat(int(config["batch_size"]), 1, 1, 1)
-
+# x_single = x_single.to(device).float()
 
 # ==========================
 # 4. FORWARD HEAD FUNCTION
@@ -115,6 +114,7 @@ print("Starting inference...")
 gc.collect()
 
 with torch.inference_mode():
+    model = model.half()
     for i in range(int(config["nums_round"])):
         state_dict = forward_head(model, x)
 
