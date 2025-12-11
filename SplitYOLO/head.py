@@ -4,19 +4,24 @@ from PIL import Image
 from ultralytics.nn.tasks import DetectionModel
 from src.Utils import get_ram, get_vram, reset_vram, extract_input_layer
 
-# ==========================
-# 1. SETUP
-# ==========================
+# Setup and check type of devices
+
 torch.set_grad_enabled(False)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"[DEVICE] {device}")
 
-
-# ==========================
-# HELPER:
-# ==========================
 def load_weights_optimized(model, path):
+    """Load weights and remove architecture with random weights.
+
+    Args:
+        model : model after load by DetectionModel class
+        path : path of weights ( only weights )
+
+    Return :
+        model : model with weights loaded .
+
+    """
     print(f"[Weights] Loading {path}...")
     try:
         ckpt = torch.load(path, map_location='cpu', weights_only=True, mmap=True)
@@ -32,10 +37,8 @@ def load_weights_optimized(model, path):
     gc.collect()
     print("[Weights] Loaded & RAM cleaned.")
 
+# Init model
 
-# ==========================
-# 2. INIT MODEL
-# ==========================
 output = extract_input_layer("yolo11n.yaml")["output"]
 res_head = extract_input_layer("yolo11n.yaml")["res_head"]
 print(f"Res Head: {res_head}")
@@ -64,9 +67,9 @@ torch.cuda.empty_cache()
 
 time.sleep(config["time_sleep"])
 
-# ==========================
-# 3. PREPARE INPUT
-# ==========================
+
+# Prepare Input for model
+
 img = Image.open('data/image.png').convert('RGB')
 w, h = img.size
 print(f"[Image size] {w}x{h}")
@@ -78,14 +81,21 @@ transform = T.Compose([
 
 x_single = transform(img).unsqueeze(0)
 
-x_single = x_single.to(device).half()
+x_single = x_single.to(device).half()   # convert to FP16
 x = x_single.repeat(int(config["batch_size"]), 1, 1, 1)
-# x_single = x_single.to(device).float()
 
-# ==========================
-# 4. FORWARD HEAD FUNCTION
-# ==========================
+
 def forward_head(head_model, x_in):
+    """ Forward throughout head layers .
+
+    Arguments :
+        head_model : model with truth weights .
+        x_in : input ( image and n batches )
+
+    return :
+        feature_map : dict - include last layer output and short-cut block
+
+    """
     split_index = config["cut_layer"]
     y = {}  # store features map
     y[-1] = x_in
@@ -103,14 +113,10 @@ def forward_head(head_model, x_in):
 
     return state
 
-
-# ==========================
-# 5. RUN LOOP
-# ==========================
+# clean and run loops
 time.sleep(config["time_sleep"])
 print("Starting inference...")
 
-# Dọn rác lần cuối
 gc.collect()
 
 with torch.inference_mode():
@@ -118,14 +124,9 @@ with torch.inference_mode():
     for i in range(int(config["nums_round"])):
         state_dict = forward_head(model, x)
 
-        # if i % 20 == 0: torch.cuda.empty_cache()
-
-# ==========================
-# 6. SAVE
-# ==========================
+# Save to feature_map.pt
 print(f"[Type] {type(state_dict)}")
 print(f"[Keys] {state_dict.keys()}")
 
-# Save
 torch.save(state_dict, 'feature_map.pt')
 print("\nSaved single feature map to 'feature_map.pt'")
