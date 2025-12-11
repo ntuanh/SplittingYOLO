@@ -1,34 +1,38 @@
 import time
 from ultralytics import YOLO
-import torch , yaml , cv2
+import torch, yaml
 from PIL import Image
 import torchvision.transforms as T
-from ultralytics.utils import DEFAULT_CFG
-from ultralytics.models.yolo.detect import DetectionPredictor
-
 
 with open('./cfg/config.yaml') as file:
     config = yaml.safe_load(file)
 
-# Load model
+# Load model (KEEP FP32)
 model = YOLO("yolo11n.pt")
 
 # Load + transform image
-img = Image.open("./data/image.png").convert('RGB')
+img = Image.open("./data/image.png").convert("RGB")
 transform = T.Compose([
     T.Resize((640, 640)),
     T.ToTensor(),
 ])
-x = transform(img)  # [3, 640, 640]
+x = transform(img)
 
-batch = x.unsqueeze(0).repeat(int(config["batch_size"]), 1, 1, 1)  # [30, 3, 640, 640]
+batch = x.unsqueeze(0).repeat(int(config["batch_size"]), 1, 1, 1)
 
-batch = batch.to(model.device).float()
+# Convert ONLY input to FP16
+if torch.cuda.is_available():
+    batch = batch.to("cuda").half()
+else:
+    batch = batch.float()
 
 time.sleep(config["time_sleep"])
-# Inference 1000 lần
+
+# Inference
 for _ in range(int(config["nums_round"])):
     result = model(batch, verbose=False)
+
+
 
 # ============================================================
 # 5. POSTPROCESS
