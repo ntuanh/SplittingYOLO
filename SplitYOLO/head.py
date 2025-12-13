@@ -62,12 +62,12 @@ load_weights_optimized(model, 'part1.pt')
 
 model.to(device)
 model.eval()
-time.sleep(config["time_sleep"])
+time.sleep(config["time_sleep"])        # 1 st
 
 gc.collect()
 torch.cuda.empty_cache()
 
-time.sleep(config["time_sleep"])
+time.sleep(config["time_sleep"])        # 2 nd
 # Prepare Input for model
 
 img = Image.open('data/image.png').convert('RGB')
@@ -112,17 +112,19 @@ def forward_head(head_model, x_in):
     return state
 
 # clean and run loops
-time.sleep(config["time_sleep"])
+time.sleep(config["time_sleep"])        # 3rd
 print("Starting inference...")
 
 gc.collect()
 
-time.sleep(config["time_sleep"])
+time.sleep(config["time_sleep"])        # 4th
 
 with torch.inference_mode():
     model = model.half()
     for i in range(int(config["nums_round"]) // 2 + 1 ):
         state_dict = forward_head(model, x)
+        gc.collect()
+        torch.cuda.empty_cache()
 
 # Save to feature_map.pt
 print(f"[Type] {type(state_dict)}")
