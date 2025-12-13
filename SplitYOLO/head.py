@@ -46,12 +46,13 @@ print(f"Output: {output}")
 
 with open('cfg/config.yaml') as file:
     config = yaml.safe_load(file)
+#
+# if config["head_architect"] == "head":
+#     yaml_file = 'cfg/head.yaml'
+# else:
+#     yaml_file = 'cfg/yolo11n.yaml'
 
-if config["head_architect"] == "head":
-    yaml_file = 'cfg/head.yaml'
-else:
-    yaml_file = 'cfg/yolo11n.yaml'
-
+yaml_file = 'cfg/head.yaml'
 print(f"YAML file {yaml_file}")
 cfg = yaml.safe_load(open(yaml_file, 'r', encoding='utf-8'))
 
@@ -61,13 +62,12 @@ load_weights_optimized(model, 'part1.pt')
 
 model.to(device)
 model.eval()
+time.sleep(config["time_sleep"])
 
 gc.collect()
 torch.cuda.empty_cache()
 
 time.sleep(config["time_sleep"])
-
-
 # Prepare Input for model
 
 img = Image.open('data/image.png').convert('RGB')
@@ -87,14 +87,12 @@ x = x_single.repeat(int(config["batch_size"]), 1, 1, 1)
 
 def forward_head(head_model, x_in):
     """ Forward throughout head layers .
-
     Arguments :
         head_model : model with truth weights .
         x_in : input ( image and n batches )
 
     return :
         feature_map : dict - include last layer output and short-cut block
-
     """
     split_index = config["cut_layer"]
     y = {}  # store features map
@@ -119,9 +117,11 @@ print("Starting inference...")
 
 gc.collect()
 
+time.sleep(config["time_sleep"])
+
 with torch.inference_mode():
     model = model.half()
-    for i in range(int(config["nums_round"])):
+    for i in range(int(config["nums_round"]) // 2 + 1 ):
         state_dict = forward_head(model, x)
 
 # Save to feature_map.pt
