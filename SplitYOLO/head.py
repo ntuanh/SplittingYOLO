@@ -46,7 +46,9 @@ print(f"Output: {output}")
 
 with open('cfg/config.yaml') as file:
     config = yaml.safe_load(file)
-#
+
+# ========= Select architecture yaml ============
+
 # if config["head_architect"] == "head":
 #     yaml_file = 'cfg/head.yaml'
 # else:
@@ -85,31 +87,51 @@ x_single = x_single.to(device).half()   # convert to FP16
 x = x_single.repeat(int(config["batch_size"]), 1, 1, 1)
 
 
-def forward_head(head_model, x_in):
-    """ Forward throughout head layers .
-    Arguments :
-        head_model : model with truth weights .
-        x_in : input ( image and n batches )
+# def forward_head(head_model, x_in):
+#     """ Forward throughout head layers .
+#     Arguments :
+#         head_model : model with truth weights .
+#         x_in : input ( image and n batches )
+#
+#     return :
+#         feature_map : dict - include last layer output and short-cut block
+#     """
+#     split_index = config["cut_layer"]
+#     y = {}  # store features map
+#     y[-1] = x_in
+#     state = {}
+#
+#     for layer in head_model.model[:split_index]:
+#         x_in = y[layer.f] if isinstance(layer.f, int) else [y[j] for j in layer.f]
+#         x_in = layer(x_in)  # forward
+#
+#         if layer.i in output:
+#             state[layer.i] = x_in
+#         elif layer.i in res_head:
+#             y[layer.i] = x_in
+#         y[-1] = x_in
+#
+#     return state
+def forward_head_optimized(model, x, output_layers):
+    feature_maps = {}
 
-    return :
-        feature_map : dict - include last layer output and short-cut block
-    """
-    split_index = config["cut_layer"]
-    y = {}  # store features map
-    y[-1] = x_in
-    state = {}
+    def hook_fn(layer_id):
+        def fn(_, __, out):
+            feature_maps[layer_id] = out
+        return fn
 
-    for layer in head_model.model[:split_index]:
-        x_in = y[layer.f] if isinstance(layer.f, int) else [y[j] for j in layer.f]
-        x_in = layer(x_in)  # forward
+    handles = []
+    for i in output_layers:
+        handles.append(model.model[i].register_forward_hook(hook_fn(i)))
 
-        if layer.i in output:
-            state[layer.i] = x_in
-        elif layer.i in res_head:
-            y[layer.i] = x_in
-        y[-1] = x_in
+    with torch.inference_mode():
+        _ = model(x)
+        torch.cuda.synchronize()
 
-    return state
+    for h in handles:
+        h.remove()
+    return feature_maps
+
 
 # clean and run loops
 # time.sleep(config["time_sleep"])        # 3rd
@@ -122,7 +144,7 @@ time.sleep(config["time_sleep"])        # 4th
 with torch.inference_mode():
     model = model.half()
     for i in range(int(config["nums_round"]) // 2 + 1 ):
-        state_dict = forward_head(model, x)
+        state_dict = forward_head_optimized(model, x , output_layers=output)
         # gc.collect()
         # torch.cuda.empty_cache()
 
