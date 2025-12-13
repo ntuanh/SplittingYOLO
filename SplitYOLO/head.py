@@ -52,7 +52,7 @@ with open('cfg/config.yaml') as file:
 # else:
 #     yaml_file = 'cfg/yolo11n.yaml'
 
-yaml_file = 'cfg/head.yaml'
+yaml_file = 'cfg/yolo11n.yaml'
 print(f"YAML file {yaml_file}")
 cfg = yaml.safe_load(open(yaml_file, 'r', encoding='utf-8'))
 
