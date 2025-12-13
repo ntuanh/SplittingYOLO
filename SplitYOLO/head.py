@@ -40,19 +40,12 @@ def load_weights_optimized(model, path):
 # Init model
 
 output = extract_input_layer("yolo11n.yaml")["output"]
-res_head = extract_input_layer("yolo11n.yaml")["res_head"]
-print(f"Res Head: {res_head}")
 print(f"Output: {output}")
 
 with open('cfg/config.yaml') as file:
     config = yaml.safe_load(file)
 
 # ========= Select architecture yaml ============
-
-# if config["head_architect"] == "head":
-#     yaml_file = 'cfg/head.yaml'
-# else:
-#     yaml_file = 'cfg/yolo11n.yaml'
 
 yaml_file = 'cfg/yolo11n.yaml'
 print(f"YAML file {yaml_file}")
@@ -113,6 +106,15 @@ x = x_single.repeat(int(config["batch_size"]), 1, 1, 1)
 #
 #     return state
 def forward_head_optimized(model, x, output_layers):
+    """
+    Optimize the final forward function to reduce CPU dependency
+    by minimizing CPU-side control logic and offloading execution
+    flow and tensor operations to the device.
+    :param model: model FP16
+    :param x: input  FP16
+    :param output_layers: list short cut output layers
+    :return: state dict ( include shortcut output layers )
+    """
     feature_maps = {}
 
     def hook_fn(layer_id):
@@ -143,7 +145,7 @@ time.sleep(config["time_sleep"])        # 4th
 
 with torch.inference_mode():
     model = model.half()
-    for i in range(int(config["nums_round"]) // 2 + 1 ):
+    for i in range(int(config["nums_round"]) ):
         state_dict = forward_head_optimized(model, x , output_layers=output)
         # gc.collect()
         # torch.cuda.empty_cache()
