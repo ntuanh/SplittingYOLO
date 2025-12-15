@@ -80,31 +80,31 @@ x_single = x_single.to(device).half()   # convert to FP16
 x = x_single.repeat(int(config["batch_size"]), 1, 1, 1)
 
 
-# def forward_head(head_model, x_in):
-#     """ Forward throughout head layers .
-#     Arguments :
-#         head_model : model with truth weights .
-#         x_in : input ( image and n batches )
-#
-#     return :
-#         feature_map : dict - include last layer output and short-cut block
-#     """
-#     split_index = config["cut_layer"]
-#     y = {}  # store features map
-#     y[-1] = x_in
-#     state = {}
-#
-#     for layer in head_model.model[:split_index]:
-#         x_in = y[layer.f] if isinstance(layer.f, int) else [y[j] for j in layer.f]
-#         x_in = layer(x_in)  # forward
-#
-#         if layer.i in output:
-#             state[layer.i] = x_in
-#         elif layer.i in res_head:
-#             y[layer.i] = x_in
-#         y[-1] = x_in
-#
-#     return state
+def forward_head(head_model, x_in):
+    """ Forward throughout head layers .
+    Arguments :
+        head_model : model with truth weights .
+        x_in : input ( image and n batches )
+
+    return :
+        feature_map : dict - include last layer output and short-cut block
+    """
+    split_index = config["cut_layer"]
+    y = {}  # store features map
+    y[-1] = x_in
+    state = {}
+
+    for layer in head_model.model[:split_index]:
+        x_in = y[layer.f] if isinstance(layer.f, int) else [y[j] for j in layer.f]
+        x_in = layer(x_in)  # forward
+
+        if layer.i in output:
+            state[layer.i] = x_in
+        elif layer.i in res_head:
+            y[layer.i] = x_in
+        y[-1] = x_in
+
+    return state
 def forward_head_optimized(model, x, output_layers):
     """
     Optimize the final forward function to reduce CPU dependency

@@ -7,7 +7,7 @@ import torchvision.transforms as T
 with open('./cfg/config.yaml') as file:
     config = yaml.safe_load(file)
 
-# Load model (KEEP FP32)
+
 model = YOLO("yolo11n.pt")
 
 # Load + transform image
@@ -34,9 +34,9 @@ for _ in range(int(config["nums_round"])):
 
 
 
-# ============================================================
+
 # 5. POSTPROCESS
-# ============================================================
+
 
 # print(type(config["post_process"]))
 if config["post_process"] == True :
@@ -60,9 +60,9 @@ if config["post_process"] == True :
     results = custom_predictor.postprocess(preds, dummy_im, orig_imgs)
     result = results[0]
 
-    # ============================================================
+    
     # 6. DRAW OUTPUT
-    # ============================================================
+    
     boxes = result.boxes
     if len(boxes) > 0:
         annotator = Annotator(orig_imgs[0], line_width=2, example=str(result.names))
@@ -83,5 +83,26 @@ if config["post_process"] == True :
     cv2.destroyAllWindows()
 
 print("Inference done ")
+
+
+# ====================================
+feature_maps = {}
+
+def save_feature_map(name):
+    def hook(module, input, output):
+        feature_maps[name] = output
+    return hook
+
+# Ví dụ: gán hook vào các lớp bạn quan tâm
+target_layers = [10, 15, 20]  # chỉ số layer trong model.model
+for idx in target_layers:
+    model.model[idx].register_forward_hook(save_feature_map(f"layer_{idx}"))
+
+# Gọi inference như thường
+output = model(batch)
+
+# Sau khi inference xong, bạn có thể truy xuất:
+for name, fmap in feature_maps.items():
+    print(f"{name}: {fmap.shape}")
 
 
